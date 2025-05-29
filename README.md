@@ -108,9 +108,53 @@ http://localhost:5173
 
 ### Database Setup
 
-- The database schema is defined in `backend/src/db/init.sql`.
-- Ensure your MySQL server is running and accessible.
-- Use a MySQL client or command line to execute the SQL script.
+1. Install MySQL Server if you haven't already:
+   - Download MySQL Community Server from [MySQL Official Website](https://dev.mysql.com/downloads/mysql/)
+   - Follow the installation instructions for your operating system
+
+2. Start MySQL Server:
+   - Windows: MySQL service should start automatically
+   - Linux: `sudo systemctl start mysql`
+   - macOS: `brew services start mysql`
+
+3. Create Database and Tables:
+   ```bash
+   # Login to MySQL (replace 'your_username' with your MySQL username)
+   mysql -u your_username -p
+
+   # Inside MySQL shell, create database and user:
+   CREATE DATABASE task_converter_db;
+   CREATE USER 'task_user'@'localhost' IDENTIFIED BY 'your_password';
+   GRANT ALL PRIVILEGES ON task_converter_db.* TO 'task_user'@'localhost';
+   FLUSH PRIVILEGES;
+   EXIT;
+
+   # Import the schema (from project root directory)
+   mysql -u task_user -p task_converter_db < backend/src/db/init.sql
+   ```
+
+4. Verify Database Setup:
+   ```bash
+   mysql -u task_user -p
+   USE task_converter_db;
+   SHOW TABLES;
+   ```
+
+   You should see the following tables:
+   - tasks
+   - meetings
+   - task_sources
+
+5. Update Environment Variables:
+   - In your `backend/.env` file, update the database configuration:
+     ```
+     DB_HOST=localhost
+     DB_USER=task_user
+     DB_PASSWORD=your_password
+     DB_NAME=task_converter_db
+     ```
+
+Note: Make sure to replace 'your_password' with a secure password of your choice.
 
 ---
 
