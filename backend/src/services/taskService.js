@@ -4,55 +4,36 @@ const { extractTasksFromText } = require('./openaiService');
 class TaskService {
   parseDateTime(dateTimeStr) {
     try {
-      // Handle common natural language patterns
-      const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      console.log('parseDateTime input:', dateTimeStr);
       
-      const dateMap = {
-        'today': today,
-        'tomorrow': tomorrow,
-        'end of week': (() => {
-          const endOfWeek = new Date(today);
-          endOfWeek.setDate(today.getDate() + (5 - today.getDay())); // Friday
-          endOfWeek.setHours(23, 59, 59, 999);
-          return endOfWeek;
-        })(),
-        'next week': (() => {
-          const nextWeek = new Date(today);
-          nextWeek.setDate(today.getDate() + 7);
-          return nextWeek;
-        })()
-      };
-
-      // Try to parse as ISO date first
-      let parsedDate = new Date(dateTimeStr);
-      
-      // If invalid date or natural language pattern found
-      if (isNaN(parsedDate) || !dateTimeStr.includes('-')) {
-        const lowerStr = dateTimeStr.toLowerCase();
-        for (const [key, value] of Object.entries(dateMap)) {
-          if (lowerStr.includes(key)) {
-            parsedDate = value;
-            break;
-          }
+      // First check if it's a valid ISO string
+      const isoDate = new Date(dateTimeStr);
+      if (!isNaN(isoDate)) {
+        // Extract time components directly from the ISO string
+        const matches = dateTimeStr.match(/T(\d{2}):(\d{2}):(\d{2})/);
+        if (matches) {
+          const [_, hours, minutes, seconds] = matches;
+          // Always set year to 2025 and preserve the exact time
+          const month = ('0' + (isoDate.getUTCMonth() + 1)).slice(-2);
+          const day = ('0' + isoDate.getUTCDate()).slice(-2);
+          return `2025-${month}-${day} ${hours}:${minutes}:${seconds}`;
         }
       }
 
-      // If still invalid, default to end of current day
-      if (isNaN(parsedDate)) {
-        today.setHours(23, 59, 59, 999);
-        return today.toISOString().slice(0, 19).replace('T', ' ');
-      }
-
-      // Convert to MySQL DATETIME format
-      return parsedDate.toISOString().slice(0, 19).replace('T', ' ');
+      // For non-ISO strings or if time extraction fails, use end of day
+      const now = new Date();
+      const year = 2025;
+      const month = ('0' + (now.getUTCMonth() + 1)).slice(-2);
+      const day = ('0' + now.getUTCDate()).slice(-2);
+      return `${year}-${month}-${day} 23:59:59`;
     } catch (error) {
       console.error('Error parsing date:', error);
-      // Default to end of current day
-      const today = new Date();
-      today.setHours(23, 59, 59, 999);
-      return today.toISOString().slice(0, 19).replace('T', ' ');
+      // If all parsing fails, use end of current day
+      const now = new Date();
+      const year = 2025;
+      const month = ('0' + (now.getUTCMonth() + 1)).slice(-2);
+      const day = ('0' + now.getUTCDate()).slice(-2);
+      return `${year}-${month}-${day} 23:59:59`;
     }
   }
 
@@ -63,8 +44,8 @@ class TaskService {
       
       // Validate and enforce P3 as default priority
       const validatePriority = (priority) => {
-        const validPriorities = ['P1', 'P2', 'P3'];
-        // Only allow P1/P2 if explicitly set, otherwise force P3
+        const validPriorities = ['P1', 'P2', 'P3', 'P4'];
+        // Allow all valid priorities, default to P3
         return validPriorities.includes(priority) ? priority : 'P3';
       };
 
@@ -90,7 +71,22 @@ class TaskService {
         
         // Handle empty or missing dueDateTime
         const dueDateTime = task.dueDateTime || 'end of day';
-        const parsedDateTime = this.parseDateTime(dueDateTime);
+        let parsedDateTime = this.parseDateTime(dueDateTime);
+        console.log('parseAndCreateTasks parsedDateTime:', parsedDateTime);
+
+        // Convert ISO string to MySQL DATETIME format (YYYY-MM-DD HH:mm:ss)
+        // Removed redundant conversion since parseDateTime already returns correct format
+        // if (parsedDateTime.endsWith('Z')) {
+        //   const dateObj = new Date(parsedDateTime);
+        //   const year = dateObj.getFullYear();
+        //   const month = ('0' + (dateObj.getMonth() + 1)).slice(-2);
+        //   const day = ('0' + dateObj.getDate()).slice(-2);
+        //   const hours = ('0' + dateObj.getHours()).slice(-2);
+        //   const minutes = ('0' + dateObj.getMinutes()).slice(-2);
+        //   const seconds = ('0' + dateObj.getSeconds()).slice(-2);
+        //   parsedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        //   console.log('parseAndCreateTasks converted parsedDateTime:', parsedDateTime);
+        // }
         
         // Ensure P3 is default for both single and bulk tasks
         const priority = task.priority || "P3";
@@ -100,7 +96,7 @@ class TaskService {
         
         await pool.execute(
           'INSERT INTO tasks (id, task_name, assignee, due_date_time, priority) VALUES (?, ?, ?, ?, ?)',
-          [id, task.taskName, task.assignee, parsedDateTime, priority]
+          [id, task.taskName, assignee, parsedDateTime, priority]
         );
         
         // Get the saved task
@@ -131,8 +127,25 @@ class TaskService {
     try {
       const { task_name, assignee, due_date_time, priority, status } = updates;
 
+      // Validate required fields
+      if (!task_name || !assignee || !due_date_time || !priority || !status) {
+        throw new Error('Missing required fields in update');
+      }
+
       // Parse and convert the due date time
-      const parsedDateTime = this.parseDateTime(due_date_time);
+      let parsedDateTime = this.parseDateTime(due_date_time);
+
+      // Convert ISO string to MySQL DATETIME format (YYYY-MM-DD HH:mm:ss)
+      if (parsedDateTime.endsWith('Z')) {
+        const dateObj = new Date(parsedDateTime);
+        const year = dateObj.getFullYear();
+        const month = ('0' + (dateObj.getMonth() + 1)).slice(-2);
+        const day = ('0' + dateObj.getDate()).slice(-2);
+        const hours = ('0' + dateObj.getHours()).slice(-2);
+        const minutes = ('0' + dateObj.getMinutes()).slice(-2);
+        const seconds = ('0' + dateObj.getSeconds()).slice(-2);
+        parsedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      }
 
       await pool.execute(
         'UPDATE tasks SET task_name = ?, assignee = ?, due_date_time = ?, priority = ?, status = ? WHERE id = ?',

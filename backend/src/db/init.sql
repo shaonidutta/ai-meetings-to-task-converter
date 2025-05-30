@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     task_name VARCHAR(255) NOT NULL,
     assignee VARCHAR(100) NOT NULL,
     due_date_time DATETIME NOT NULL,
-    priority ENUM('P1', 'P2', 'P3') NOT NULL,
+    priority ENUM('P1', 'P2', 'P3', 'P4') NOT NULL,
     status ENUM('pending', 'completed') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
