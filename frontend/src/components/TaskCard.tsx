@@ -107,6 +107,7 @@ export function TaskCard({ task, onUpdate, onDelete }: TaskCardProps) {
                 <option value="P1">P1 - Critical</option>
                 <option value="P2">P2 - High</option>
                 <option value="P3">P3 - Medium</option>
+                <option value="P4">P4 - Low</option>
               </select>
             </div>
 

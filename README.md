@@ -9,10 +9,17 @@ Transform your meeting notes and conversations into actionable tasks with AI-pow
   - Automatically identifies tasks from meeting notes and conversations
   - Extracts due dates, assignees, and priorities
   - Handles both single tasks and bulk meeting minutes
+- **Smart Date/Time Handling**:
+  - Supports various date formats (e.g., "tomorrow", "next Friday", "June 4th")
+  - Handles specific times (e.g., "2pm", "10:30am")
+  - Default to end of day (23:59:59) when no time specified
+  - Consistent timezone handling (UTC)
+  - All dates are set in year 2025 by default
 - **Smart Priority Detection**:
-  - P1 (Critical): Automatically assigned to urgent and high-priority tasks
-  - P2 (High): For important but non-critical tasks
-  - P3 (Medium): For regular priority tasks
+  - P1 (Critical): For "highest priority", "urgent", "critical", "P1", "priority 1"
+  - P2 (High): For "high priority", "important", "P2", "priority 2"
+  - P3 (Medium): Default priority, also for "medium priority"
+  - P4 (Low): For "low priority", "lowest priority", "P4", "priority 4"
 - **Task Management**:
   - Clean, modern task board interface
   - Edit task details inline
@@ -23,6 +30,41 @@ Transform your meeting notes and conversations into actionable tasks with AI-pow
   - Responsive layout for all devices
   - Intuitive task creation flow
   - Real-time updates
+
+## API Endpoints
+
+### Task Management
+- `POST /api/tasks/parse` - Parse and create tasks from text
+  - Supports both single task and bulk meeting minutes
+  - Returns created tasks with IDs
+- `GET /api/tasks` - Get all tasks
+- `PUT /api/tasks/:id` - Update task details
+- `DELETE /api/tasks/:id` - Delete a task
+
+### Request/Response Format
+```json
+// POST /api/tasks/parse
+{
+  "text": "schedule a meeting at 3pm tomorrow by John on high priority",
+  "mode": "single"  // or "bulk" for meeting minutes
+}
+
+// Response
+{
+  "tasks": [
+    {
+      "id": "uuid",
+      "task_name": "schedule a meeting",
+      "assignee": "John",
+      "due_date_time": "2025-05-31T15:00:00Z",
+      "priority": "P2",
+      "status": "pending",
+      "created_at": "2025-05-30T05:02:39.000Z",
+      "updated_at": "2025-05-30T05:02:39.000Z"
+    }
+  ]
+}
+```
 
 ---
 
@@ -170,6 +212,10 @@ Note: Make sure to replace 'your_password' with a secure password of your choice
 - Remember to replace the OpenAI API key placeholder in the `.env` file before running the backend.
 - The frontend runs on port 5173 by default.
 - The backend runs on port 3000 by default.
+- All dates are handled in UTC timezone.
+- Default year is set to 2025 for all tasks.
+- Priority defaults to P3 if not specified.
+- Time defaults to end of day (23:59:59) if not specified.
 
 ---
 

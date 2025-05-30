@@ -1,5 +1,5 @@
 interface PriorityBadgeProps {
-  priority: "P1" | "P2" | "P3"
+  priority: "P1" | "P2" | "P3" | "P4"
   className?: string
 }
 
@@ -18,6 +18,11 @@ const priorityConfig = {
     label: "Medium",
     className: "bg-blue-900/30 text-blue-300 border-blue-700/50",
     dotColor: "bg-blue-400",
+  },
+  P4: {
+    label: "Low",
+    className: "bg-green-900/30 text-green-300 border-green-700/50",
+    dotColor: "bg-green-400",
   }
 }
 

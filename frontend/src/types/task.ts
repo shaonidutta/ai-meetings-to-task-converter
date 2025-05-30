@@ -3,7 +3,7 @@ export interface Task {
   task_name: string;
   assignee: string;
   due_date_time: string;
-  priority: 'P1' | 'P2' | 'P3';
+  priority: 'P1' | 'P2' | 'P3' | 'P4';
   status: 'pending' | 'completed';
   created_at: string;
   updated_at: string;

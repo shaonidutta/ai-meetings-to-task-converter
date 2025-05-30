@@ -18,6 +18,8 @@ TaskExtractor-PRD.md
 # Build outputs
 dist/
 build/
+frontend/dist/
+backend/dist/
 *.tsbuildinfo
 
 # Logs
@@ -40,6 +42,12 @@ yarn-error.log*
 
 # Testing
 coverage/
+**/test*.js
+**/test/
+**/tests/
+**/__tests__/
+**/*.test.js
+**/*.spec.js
 
 # Misc
 .DS_Store
